@@ -1,0 +1,134 @@
+
+create 'test_e_base','cf'
+
+
+create 'test_T','cf'
+
+
+
+        hadoop fs -rm -f /HDS_VOL_HDNN/input/GPRS/${fname} 1>> $LOGFILE 2>> $ERRFILE
+
+        hbase_importTSV "$table_column" "/HDS_VOL_HDNN/GPRS" "/HDS_VOL_HDNN/input/GPRS/${fname}" "|"
+
+
+
+
+alter table h_ctr_cdr add if not exists partition (trx_date='20200423',event_id='5157'); 
+load data LOCAL inpath '/app/HDSBAT/cvtdata/CTR_CDR/CTR_20200423_5157_p3_20200424070142_00.gz' into table h_ctr_cdr partition(trx_date='20200423',event_id='5157');
+
+
+
+hadoop fs -copyFromLocal ${CNSSDATADIR}/$cv_file_name /HDS_VOL_HIVE/CNSS/cnss_s11/part_key=$part_time 1>>$LOGFILE 2>&1
+
+
+
+alter table cnss_s11 add if not exists partition (part_key='20200420') LOCATION '/HDS_VOL_HIVE/CNSS/cnss_s11/part_key=20200420'; 
+alter table cnss_s11 add if not exists partition (part_key='20200420') LOCATION '/HDS_VOL_HIVE/CNSS/cnss_s11/part_key=20200420'; 
+alter table cnss_s11 add if not exists partition (part_key='20200420') LOCATION '/HDS_VOL_HIVE/CNSS/cnss_s11/part_key=20200420'; 
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE `h_fw_cdr`(
+  `batch_no` string, 
+  `start_datetime` string, 
+  `src` string, 
+  `json_value` string)
+PARTITIONED BY ( 
+  `start_date` string)
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' 
+WITH SERDEPROPERTIES ( 
+  'field.delim'='|', 
+  'serialization.format'='|') 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.mapred.TextInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
+LOCATION
+  'maprfs:/HDS_VOL_HIVE/FWCDR'
+TBLPROPERTIES (
+  'transient_lastDdlTime'='1565257228')
+
+
+
+CREATE EXTERNAL TABLE IF NOT EXISTS test_e (
+num int,
+str_a string,
+str_b string ,
+str_c string,
+info  int)
+PARTITIONED BY ( 
+  `start_date` string)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION
+  'maprfs:/test';
+
+1,a1,b1,c1,11
+2,a2,b2,c2,22
+3,a3,b3,c3,33
+4,a4,b4,c4,44
+5,d5,b5,c5,55
+
+
+CREATE EXTERNAL TABLE IF NOT EXISTS test_e (
+num int,
+str_a string,
+str_b string ,
+str_c string,
+info  int)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION
+  'maprfs:/test';
+
+
+
+
+
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.separator=’,’ -Dimporttsv.columns=“HBASE_ROW_KEY,cf:col01” ‘YOUR_HBASE_TABLE’ ‘YOUR_HDFS_DIRECTORY’
+
+
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv 
+-Dimporttsv.separator=',' -Dimporttsv.columns="HBASE_ROW_KEY,cf:str_a,cf:str_b,cf:str_c,cf:info" 'test_T' '/test/test.csv'
+ 
+
+
+        hbase_importTSV "$table_column" "/HDS_VOL_HDNN/GPRS" "/HDS_VOL_HDNN/input/GPRS/${fname}" "|"
+
+
+hbase(main):008:0> quit
+[mapr@bigdatamr10 ~]$ maprcli table create
+table create
+         -path path 
+        [ -copymetafrom SrcTablePath ]
+        [ -copymetatype all|cfs|aces|splits|attrs ]
+        [ -regionsizemb Region Size in MB ]
+        [ -autosplit Auto Split table ]
+        [ -bulkload Bulk load ]
+        [ -audit Enable Audit ]
+        [ -tabletype Table Type - json or binary. default: binary ]
+        [ -packperm Pack Permission settings ]
+        [ -bulkloadperm Bulk load Permission settings ]
+        [ -splitmergeperm Split and Merge Permission settings ]
+        [ -createrenamefamilyperm Add/Rename Family Permission settings ]
+        [ -deletefamilyperm Delete Family Permission settings ]
+        [ -adminaccessperm Ace Admin Permission settings ]
+        [ -replperm Replication Admin Permission settings ]
+        [ -indexperm Secondary Index Admin Permission settings ]
+        [ -defaultversionperm CF Versions Default Permission for binary tabletype ]
+        [ -defaultcompressionperm CF Compression Default Permission ]
+        [ -defaultmemoryperm CF Memory Default Permission ]
+        [ -defaultreadperm CF Read Default Permission ]
+        [ -defaultwriteperm CF Write Default Permission ]
+        [ -defaulttraverseperm CF Traverse Default Permission for json tabletype ]
+        [ -defaultappendperm CF Append Default Permission for binary tabletype ]
+        [ -metricsinterval Metrics collection interval, in seconds ]
+

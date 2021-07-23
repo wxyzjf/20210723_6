@@ -1,0 +1,301 @@
+
+from __future__ import print_function
+
+from pyspark.sql import SparkSession
+
+from pyspark.sql import  Row
+
+from pyspark.sql.types import *
+
+from datetime import datetime
+
+def basic_df_example(spark):
+
+    myDomainSchema = StructType([ StructField("domain", StringType(), True),
+                              StructField("media_category_name", StringType(), True),
+                              StructField("media_sub_category_name", IntegerType(), True),
+                              StructField("media_provider_name", IntegerType(), True)
+                            ])
+
+ 
+
+    myMiepSchema = StructType([ StructField("subr_num", StringType(), True),
+                              StructField("subr_url", StringType(), True),
+                              StructField("uload_size", IntegerType(), True),
+                              StructField("dnld_size", IntegerType(), True),
+                              StructField("call_dur", IntegerType(), True),
+                              StructField("charging_id", StringType(), True),
+                              StructField("accs_type_cd", StringType(), True),
+                              StructField("accs_point_name", StringType(), True),
+                              StructField("sgsn_ip_addr", StringType(), True),
+                              StructField("radio_accs_type_cd", StringType(), True),
+                              StructField("src_ip_addr", StringType(), True),
+                              StructField("imsi", StringType(), True),
+                              StructField("accs_date", StringType(), True),
+                              StructField("accs_time", StringType(), True),
+                              StructField("status", StringType(), True),
+                              StructField("user_agent", StringType(), True),
+                              StructField("statuscode", StringType(), True),
+                              StructField("imei", StringType(), True),
+                              StructField("dialleddigit", StringType(), True),
+                              StructField("domain", StringType(), True),
+                              StructField("content_type", StringType(), True),
+                              StructField("part_key", IntegerType(), True),
+                            ])
+
+    miep = spark.read.schema(myMiepSchema).csv("/HDS_VOL_TMP/test_miep_sample/SMCIN_*",sep='\t')
+    domain = spark.read.schema(myDomainSchema).csv("/HDS_VOL_HIVE/miep_domain/domains.csv")
+    
+    miep.createOrReplaceTempView("miep")
+    domain.createOrReplaceTempView("domain")
+    
+    #spark.catalog.cacheTable("domain")    
+
+    spark.sql("""select subr_num,
+                        accs_date,
+                        domain,
+                        sum(uload_size+dnld_size)as sum_vol,
+                        count(*) cnt 
+                   from miep 
+                  group by subr_num,accs_date,domain""").createOrReplaceTempView("miepgrp")
+    
+    spark.sql("""select m.subr_num,
+                        m.accs_date,
+                        d.media_category_name,
+                        d.media_sub_category_name,
+                        sum(sum_vol),
+                        sum(cnt)
+                   from miepgrp m
+                   left join domain d on m.domain = d.domain
+                  group by m.subr_num,m.accs_date,d.media_category_name,d.media_sub_category_name 
+                """).write.save("maprfs:///HDS_VOL_TMP/test_miep_ba",format='csv',mode='overwrite')
+
+
+
+
+spark = SparkSession \
+    .builder \
+    .appName("test5") \
+    .config("spark.some.config.option", "some-value") \
+    .config("spark.executor.instances","100")\
+    .config("spark.executor.memory","6G")\
+    .config("spark.executor.cores","4")\
+    .getOrCreate()
+print(datetime.now())
+basic_df_example(spark)
+print(datetime.now())
+
+------------------------------------------------------------------------------------------------
+
+from __future__ import print_function
+
+from pyspark.sql import SparkSession
+
+from pyspark.sql import  Row
+
+from pyspark.sql.types import *
+
+from datetime import datetime
+
+def basic_df_example(spark):
+
+    myDomainSchema = StructType([ StructField("domain", StringType(), True),
+                              StructField("media_category_name", StringType(), True),
+                              StructField("media_sub_category_name", IntegerType(), True),
+                              StructField("media_provider_name", IntegerType(), True)
+                            ])
+
+ 
+
+    myMiepSchema = StructType([ StructField("subr_num", StringType(), True),
+                              StructField("subr_url", StringType(), True),
+                              StructField("uload_size", IntegerType(), True),
+                              StructField("dnld_size", IntegerType(), True),
+                              StructField("call_dur", IntegerType(), True),
+                              StructField("charging_id", StringType(), True),
+                              StructField("accs_type_cd", StringType(), True),
+                              StructField("accs_point_name", StringType(), True),
+                              StructField("sgsn_ip_addr", StringType(), True),
+                              StructField("radio_accs_type_cd", StringType(), True),
+                              StructField("src_ip_addr", StringType(), True),
+                              StructField("imsi", StringType(), True),
+                              StructField("accs_date", StringType(), True),
+                              StructField("accs_time", StringType(), True),
+                              StructField("status", StringType(), True),
+                              StructField("user_agent", StringType(), True),
+                              StructField("statuscode", StringType(), True),
+                              StructField("imei", StringType(), True),
+                              StructField("dialleddigit", StringType(), True),
+                              StructField("domain", StringType(), True),
+                              StructField("content_type", StringType(), True),
+                              StructField("part_key", IntegerType(), True),
+                            ])
+
+    miep = spark.read.schema(myMiepSchema).csv("/HDS_VOL_HIVE/miep/*.gz",sep='\t')
+    domain = spark.read.schema(myDomainSchema).csv("/HDS_VOL_HIVE/miep_domain/domains.csv")
+    
+    miep.createOrReplaceTempView("miep")
+    domain.createOrReplaceTempView("domain")
+    data=spark.sql("select m.subr_num,\
+                           m.accs_date,\
+                           d.media_category_name,\
+                           d.media_sub_category_name,\
+                           count(1), \
+                           sum(m.uload_size)+sum(m.dnld_size)\
+                      from miep m \
+                      left outer join domain d on m.domain = d.domain \
+                     group by m.subr_num,m.accs_date,d.media_category_name,d.media_sub_category_name")
+    data.write.save("maprfs:///HDS_VOL_TMP/test_miep_ba",format='csv',mode='append')
+    data.show(20)
+
+spark = SparkSession \
+    .builder \
+    .appName("Python Spark SQL basic example") \
+    .config("spark.some.config.option", "some-value") \
+    .getOrCreate()
+print(datetime.now())
+basic_df_example(spark)
+print(datetime.now())
+
+------------------------------------------------------------------------------------------------
+
+#
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+"""
+A simple example demonstrating basic Spark SQL features.
+Run with:
+  ./bin/spark-submit examples/src/main/python/sql/basic.py
+"""
+from __future__ import print_function
+
+# $example on:init_session$
+from pyspark.sql import SparkSession
+# $example off:init_session$
+
+# $example on:schema_inferring$
+from pyspark.sql import  Row
+# $example off:schema_inferring$
+
+# $example on:programmatic_schema$
+# Import data types
+from pyspark.sql.types import *
+# $example off:programmatic_schema$
+
+
+def basic_df_example(spark):
+    # $example on:create_df$
+    # spark is an existing SparkSession
+    df = spark.read.csv("/HDS_VOL_HIVE/miep_domain/domains.csv")
+    # Displays the content of the DataFrame to stdout
+    df.printSchema()
+    df.show()
+    df.createOrReplaceTempView("t_table")
+    data=spark.sql("select _c0,count(1),sum(_c1) from t_table group by _c0")
+    data.show(10)
+    data.write.format("file:///home/mapr/ba/domain.csv")
+    
+    # +----+-------+
+    # | age|   name|
+    # +----+-------+
+    # |null|Michael|
+    # |  30|   Andy|
+    # |  19| Justin|
+    # +----+-------+
+    # $example off:create_df$
+    
+
+spark = SparkSession \
+    .builder \
+    .appName("Python Spark SQL basic example") \
+    .config("spark.some.config.option", "some-value") \
+    .getOrCreate()
+basic_df_example(spark)
+
+------------------------------------------------------------------------------------------------
+
+from pyspark.sql import Row
+
+myRow = Row("Hello",None,1,False)
+print(myRow.printSchema())
+
+------------------------------------------------------------------------------------------------
+import smtutil import hiveutil
+
+sc, spark = hiveutil.get_sc_spark();
+------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------
+
+
+
+------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------
+
+
+
+
+
+------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

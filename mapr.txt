@@ -1,0 +1,64 @@
+Plateform : bigdatamr08-10 
+mapr/Smart2019
+
+1) mapr (bigdata)
+
+bigdata ( hadoop mfs) --- mapreduce (hbase,hive)
+
+mapr hadoop mfs-> mapr mfs --- mapreduce (hbase,hive ,drill ,spark...)
+
+2)hadoop (file system cluster)
+(bigdatamr08,09,10)
+
+replication--
+ 
+3)maprdb (hbase)bigdatamr10
+K,V -> key,value
+
+column family 
+column name 
+
+create table table_clothes(cf_attribute,cf_sell_info)
+put table_clothes(rowkey,cf_attribute:col_color),red
+table_clothes
+-----cf_attribute
+col_color
+col_size
+col_gender
+col_type
+------cf_sell_info
+col_price
+col_mall
+
+4)hive(bigdatamr09)
+
+
+Task --->
+vi --- file  cola ,colb colc
+1) put into hadoop fs
+2) create hive table point to file
+3) learn how to loading hbase table 
+
+
+5) spark (bigdatamr10)
+
+6) drill
+
+ 
+[mapr@bigdatamr09 CTR_CDR]$ pwd
+/opt/reload/cvtdata/CTR_CDR
+
+https://mapr.com/docs/61/search.html?searchQuery=mapr+db+delete$page=4
+https://mapr.com/docs/61/ReferenceGuide/MapRPorts.html
+https://hadoop.apache.org/
+http://spark.apache.org/docs/latest/quick-start.html
+http://hadoop.apache.org/docs/r1.0.4/cn/mapred_tutorial.html
+
+
+
+
+
+
+
+
+

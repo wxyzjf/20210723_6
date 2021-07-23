@@ -1,0 +1,54 @@
+null:: 
+from pyspark.sql.functions import coalesce 
+df.select(coalesce(col("Description"), col("CustomerId"))).show() 
+
+-- in SQL 
+SELECT ifnull(null, 'return_value'), nullif('value', 'value'),
+ nvl(null, 'return_value'), nvl2('not_null', 'return_value', "else_value") 
+FROM dfTable LIMIT 1 
++------------+----+------------+------------+ 
+|           a|   b|           c|           d| 
++------------+----+------------+------------+ 
+|return_value|null|return_value|return_value| 
++------------+----+------------+------------+ 
+
+df.na.drop() 
+df.na.drop("any") 
+
+-- in SQL 
+SELECT * FROM dfTable WHERE Description IS NOT NULL 
+
+df.na.drop("all")
+# in Python 
+df.na.drop("all", subset=["StockCode", "InvoiceNo"]) 
+
+fill::
+df.na.fill("All Null values become this string")
+df.na.fill("all", subset=["StockCode", "InvoiceNo"]) 
+ df.na.fill(5:Integer)
+ df.na.fill(5:Double)
+df.na.fill("all", subset=["StockCode", "InvoiceNo"]) 
+
+fill_cols_vals = {"StockCode": 5, "Description" : "No Value"} 
+df.na.fill(fill_cols_vals) 
+
+// in Scala 
+val fillColValues = Map("StockCode" -> 5, "Description" -> "No Value") 
+df.na.fill(fillColValues)
+
+replace::
+// in Scala 
+df.na.replace("Description", Map("" -> "UNKNOWN")) 
+# in Python 
+df.na.replace([""], ["UNKNOWN"], "Description") 
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,166 @@
+val abc = spark.read.option("inferSchema","true").option("header","false").csv("/tmp/test/summary.csv")
+
+ abc.sort("_c2").explain()
+
+
+
+
+ abc.sort("_c2").take(3)
+
+abc.createOrReplaceTempView("abc_view")
+
+val sqlway = spark.sql("""select _c1,count(1) from abc_view group by _c1""");
+val dataway = abc.groupBy('_c1).count()
+sqlway.explain
+dataway.explain
+
+
+spark.sql("""select _c1,count(1) from abc_view group by _c1""").take(3)
+
+spark.sql("select max(_c2) from abc_view").take(1)
+
+val maxSql = spark.sql("""select _c0,sum(_c2) as total from abc_view 
+group by _c0 order by sum(_c2) desc limit 5 """)
+maxSql.show()
+
+
+import org.apache.spark.sql.functions.desc
+
+abc.groupBy("_c0").sum("_c2").withColumnRenamed("sum(_c2)","total").sort(desc("total")).limit(5).show()
+abc.groupBy("_c0").sum("_c2").withColumnRenamed("sum(_c2)","total").sort(desc("total")).limit(5).explain
+
+
+== Physical Plan ==
+TakeOrderedAndProject(limit=5, orderBy=[total#112L DESC NULLS LAST], output=[_c0#10,total#112L])
++- *(2) HashAggregate(keys=[_c0#10], functions=[sum(cast(_c2#12 as bigint))])
+   +- Exchange hashpartitioning(_c0#10, 200)
+      +- *(1) HashAggregate(keys=[_c0#10], functions=[partial_sum(cast(_c2#12 as bigint))])
+         +- *(1) FileScan csv [_c0#10,_c2#12] Batched: false, Format: CSV, Location: InMemoryFileIndex[maprfs:///tmp/test/summary.csv], PartitionFilters: [], PushedFilters: [], ReadSchema: struct<_c0:string,_c2:int>
+
+
+
+
+import org.apache.spark.sql.SparkSession
+import com.mapr.db.spark.sql._
+import org.apache.spark.sql.types.{StructType, StructField, StringType, IntegerType};
+              
+val cf = StructType(StructField("start_datetime", StringType) ::
+                    StructField("src", StringType) ::
+                    StructField("send_volume", StringType) ::
+                    StructField("receive_volume", StringType) ::
+                    StructField("service", StringType) ::
+                    StructField("dst", StringType) :: Nil)
+              
+val fwCdr05 = StructType(StructField("HBASE_ROW_KEY", StringType) ::
+                   StructField("cf", cf) :: Nil)
+              
+val df = spark.loadFromMapRDB("/HDS_VOL_HBASE/TEST/FW_CDR_05", fwCdr05)
+
+val fwCdr05 = StructType(StructField("HBASE_ROW_KEY", StringType) ::
+                    StructField("start_datetime", StringType) ::
+                    StructField("src", StringType) ::
+                    StructField("send_volume", StringType) ::
+                    StructField("receive_volume", StringType) ::
+                    StructField("service", StringType) ::
+                    StructField("dst", StringType) :: Nil)
+
+
+h_fw_cdr_test.batch_no  h_fw_cdr_test.start_datetime    h_fw_cdr_test.src       h_fw_cdr_test.send_volume       h_fw_cdr_test.receive_volume  h_fw_cdr_test.service   h_fw_cdr_test.dst       h_fw_cdr_test.start_date
+010.157.080.243_20200511110000  2020-05-11 11:00:00     10.157.80.243   168     52      80      113.28.162.8    20200512
+
+HBASE_ROW_KEY,cf:start_datetime,cf:src,cf:send_volume,cf:receive_volume,cf:service,cf:dst
+
+
+
+
+
+
+
+
+
+
+
+====================================
+
+
+val sc = new SparkContext("local", "test")
+val config = new HbaseConfiguration()
+...
+val hbaseContext = new HBaseContext(sc, config)
+
+rdd.hbaseForeachPartition(hbaseContext, (it, conn) => {
+ val bufferedMutator = conn.getBufferedMutator(TableName.valueOf("/apps/my_table"))
+ it.foreach((putRecord) => {
+	val put = new Put(putRecord._1)
+	putRecord._2.foreach((putValue) => 
+		put.addColumn(putValue._1,
+		putValue._2, putValue._3))
+	bufferedMutator.mutate(put)
+ })
+ bufferedMutator.flush()
+ bufferedMutator.close()
+})
+Here is the same example implemented in Java:
+JavaSparkContext jsc = new JavaSparkContext(sparkConf);
+
+try {
+  List<byte[]> list = new ArrayList<>();
+  list.add(Bytes.toBytes("1"));
+  ...
+  list.add(Bytes.toBytes("5"));
+
+  JavaRDD<byte[]> rdd = jsc.parallelize(list);
+  Configuration conf = HBaseConfiguration.create();
+  JavaHBaseContext hbaseContext = new JavaHBaseContext(jsc, conf);
+
+  hbaseContext.foreachPartition(
+	rdd,
+	new VoidFunction<Tuple2<Iterator<byte[]>, Connection>>() {
+   public void call(Tuple2<Iterator<byte[]>, Connection> t) throws Exception {
+	Table table = t._2().getTable(TableName.valueOf(tableName));
+	BufferedMutator mutator = t._2().getBufferedMutator(TableName.valueOf(tableName));
+    while (t._1().hasNext()) {
+      byte[] b = t._1().next();
+      Result r = table.get(new Get(b));
+      if (r.getExists()) {
+       mutator.mutate(new Put(b));
+      }
+    }
+
+    mutator.flush();
+    mutator.close();
+    table.close();
+   }
+  });
+} finally {
+  jsc.stop();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

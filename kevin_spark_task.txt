@@ -1,0 +1,72 @@
+https://spark.apache.org/docs/latest/quick-start.html
+
+
+
+
+
+[下午12:17] Kevin Ou
+    /opt/mapr/spark/spar-2.3.3/examples
+
+
+
+
+
+[下午12:18] Kevin Ou
+    Please focus on python
+​[下午12:18] Kevin Ou
+    or java
+​[下午12:18] Kevin Ou
+     Normally . For data using python is better choice
+
+
+
+
+
+[昨天 上午9:48] Kevin Ou
+    saved in \\gzpc-master7\IS-Dev\GZDWTeam\MAPR\spark_sample also
+
+
+https://parquet.apache.org/
+
+
+http://blogs.quovantis.com/how-to-convert-csv-to-parquet-files/
+
+
+
+https://spark.apache.org/docs/latest/sql-programming-guide.html
+
+
+https://parquet.apache.org/
+
+
+https://spark.apache.org/docs/latest/sql-data-sources-parquet.html
+
+
+
+[下午2:39] Kevin Ou
+    \\gzls04\IS-Dev\Admin\技术交流会资料
+
+
+
+
+
+s3.py
+
+spark-submit --master yarn s3.py
+
+bigdatamr10:4040
+https://spark.apache.org/docs/latest/quick-start.html
+
+the first 3 part
+quick start
+RDD
+SQL dataframes dataset
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,383 @@
+from pyspark.sql import SparkSession
+from pyspark.sql import Row
+from pyspark.sql.types import *
+spark = SparkSession.builder.appName("sp_miep").getOrCreate()
+sc = spark.sparkContext
+
+df = spark.read.parquet("maprfs:///HDS_VOL_TMP/test_miep/*parquet")
+df.take(5)
+
+df.printSchema()
+
+------------------------------------------------------------------------------------------------
+from pyspark.sql import SparkSession
+from pyspark.sql import Row
+from pyspark.sql.types import *
+spark = SparkSession.builder.appName("sp_miep").getOrCreate()
+sc = spark.sparkContext
+sch_miep = StructType([ StructField("subr_num", StringType(), True), 
+                              StructField("subr_url", StringType(), True), 
+                              StructField("uload_size", IntegerType(), True),
+                              StructField("dnld_size", IntegerType(), True),
+                              StructField("call_dur", IntegerType(), True),
+                              StructField("charging_id", StringType(), True),
+                              StructField("accs_type_cd", StringType(), True),
+                              StructField("accs_point_name", StringType(), True),
+                              StructField("sgsn_ip_addr", StringType(), True),
+                              StructField("radio_accs_type_cd", StringType(), True),
+                              StructField("src_ip_addr", StringType(), True),
+                              StructField("imsi", StringType(), True),
+                              StructField("accs_date", StringType(), True),
+                              StructField("accs_time", StringType(), True),
+                              StructField("status", StringType(), True),
+                              StructField("user_agent", StringType(), True),
+                              StructField("statuscode", StringType(), True),
+                              StructField("imei", StringType(), True),
+                              StructField("dialleddigit", StringType(), True),
+                              StructField("domain", StringType(), True),
+                              StructField("content_type", StringType(), True),
+                              StructField("part_key", IntegerType(), True),
+                            ])
+ 
+df = spark.read.format("csv").option("delimiter","\t").load("maprfs:///HDS_VOL_HIVE/miep/",schema=sch_miep)
+df.createGlobalTempView("df_miep")
+spark.sql("select subr_num,accs_date,domain,sum(uload_size+dnld_size)as sum_vol,count(*) cnt from global_temp.df_miep group by subr_num,accs_date,domain").write.save("maprfs:///HDS_VOL_TMP/test_miep",foramt='csv',mode='append')
+#df.printSchema()
+
+
+------------------------------------------------------------------------------------------------
+
+from pyspark.sql import SparkSession
+from pyspark.sql import Row
+from pyspark.sql.types import *
+
+sc = spark.sparkContext
+sch_miep = StructType([
+        StructField("msisdn",StringType(),True)
+        ,StructField("service_name",StringType(),True)
+        ,StructField("timeperiod",LongType(),True)
+        ,StructField("part_key",IntegerType(),True)
+])
+myDomainSchema = StructType([ StructField("subr_num", StringType(), True), 
+                              StructField("subr_url", StringType(), True), 
+                              StructField("uload_size", IntegerType(), True),
+                              StructField("dnld_size", IntegerType(), True),
+                              StructField("call_dur", IntegerType(), True),
+                              StructField("charging_id", StringType(), True),
+                              StructField("accs_type_cd", StringType(), True),
+                              StructField("accs_point_name", StringType(), True),
+                              StructField("sgsn_ip_addr", StringType(), True),
+                              StructField("radio_accs_type_cd", StringType(), True),
+                              StructField("src_ip_addr", StringType(), True),
+                              StructField("imsi", StringType(), True),
+                              StructField("accs_date", StringType(), True),
+                              StructField("accs_time", StringType(), True),
+                              StructField("status", StringType(), True),
+                              StructField("user_agent", StringType(), True),
+                              StructField("statuscode", StringType(), True),
+                              StructField("imei", StringType(), True),
+                              StructField("dialleddigit", StringType(), True),
+                              StructField("domain", StringType(), True),
+                              StructField("content_type", StringType(), True),
+                              StructField("part_key", IntegerType(), True),
+                            ])
+ 
+df = spark.read.text('maprfs://HDS_VOL_HIVE/miep/',schema=sch_miep,delimiter='|')
+df.printSchema()
+spark.quit()
+
+
+------------------------------------------------------------------------------------------------
+import pandas as pd
+
+------------------------------------------------------------------------------------------------
+ListA = [0,1,[3,2]]
+ListB = [4,5]
+
+
+for f in (ListA[2]):
+        print str(f)+"---"+str(type(ListA[2]))
+------------------------------------------------------------------------------------------------
+from pyspark.sql import SparkSession
+from pyspark.sql.types import *
+from pyspark.sql import Row
+
+
+spark = SparkSession.builder.appName("Py_test").getOrCreate()
+spark.sparkContext.setLogLevel("WARN")
+sc=spark.sparkContext
+
+rdd = sc.textFile("hdfs:////HDS_VOL_TMP/adaptor_5g_by_day_20200*/*",minPartitions=10,use_unicode=False).map(lambda x:x.split(",")).repartition(10).map(lambda x:(x[0],x[1],int(x[2]),int(x[3])))
+sch=StructType([        
+        StructField("msisdn",StringType(),True)
+        ,StructField("service_name",StringType(),True)
+        ,StructField("timeperiod",LongType(),True)
+        ,StructField("part_key",IntegerType(),True)
+])
+df_srcFile=spark.createDataFrame(rdd,sch)
+
+df_srcFile.write.save("hdfs:///HDS_VOL_HIVE/pqtest2",foramt='parquet',mode='append',compression='gzip')
+
+spark.stop()
+------------------------------------------------------------------------------------------------
+from pyspark.sql import SparkSession
+from pyspark.sql.types import *
+from pyspark.sql import Row
+
+
+spark = SparkSession.builder.appName("Py_test").getOrCreate()
+spark.sparkContext.setLogLevel("WARN")
+sc=spark.sparkContext
+
+rdd = sc.textFile("hdfs:////HDS_VOL_TMP/adaptor_5g_by_day_20200*/*",minPartitions=10,use_unicode=False).map(lambda x:Row(x)) 
+sch=StructType([        
+        StructField("msisdn",StringType(),True)
+        ,StructField("service_name",StringType(),True)
+        ,StructField("timeperiod",LongType(),True)
+        ,StructField("part_key",IntegerType(),True)
+])
+df_srcFile=spark.createDataFrame(rdd,sch)
+
+df_srcFile.write.save("hdfs:///HDS_VOL_TMP/pqtest",foramt='parquet',mode='append',compression='gzip')
+
+spark.stop()
+
+------------------------------------------------------------------------------------------------
+from pyspark.sql import SparkSession
+from pyspark import SparkContext,SparkConf
+
+conf = SparkConf().setAppName("Test App").setMaster('yarn')
+sc = SparkContext(conf=conf)
+
+#textFile = spark.read.text("maprfs:///HDS_VOL_HIVE/FWCDR/start_date=20200220/fwcdr_ldr_20200220_20200222093947_p1_000.gz")
+#textFile = spark.read.text("maprfs:///HDS_VOL_HIVE/NOTICE.txt")
+
+def func_map(s):
+    if int(s)%2==0:
+        return (s,1)
+
+def func_map2(k):
+    return k + 1000
+
+def func_part(iterator):
+        print "-----" + iterator 
+
+cnt = sc.textFile('maprfs:///HDS_VOL_HIVE/FWCDR/start_date=20200514').count()
+#pairs = lines.map(func_map)
+#pairs.collect()
+#pairs = lines.mapPartitions(func_part)
+
+#cc = pairs.reduceByKey(lambda a,b:a+b).sortByKey()
+
+#cc = pairs.sortByKey()
+
+
+#list=cc.collect()
+#for f in list:
+#       print f
+#print pairs.getNumPartitions()
+#print ("Partitions structure :{}".format(pairs.glom().collect()))
+
+print ("Partitions structure :{}%d" , cnt)
+------------------------------------------------------------------------------------------------
+from pyspark.sql import SparkSession
+from pyspark import SparkContext,SparkConf
+
+conf = SparkConf().setAppName("Test App").setMaster('local[5]')
+sc = SparkContext(conf=conf)
+
+#textFile = spark.read.text("maprfs:///HDS_VOL_HIVE/FWCDR/start_date=20200220/fwcdr_ldr_20200220_20200222093947_p1_000.gz")
+#textFile = spark.read.text("maprfs:///HDS_VOL_HIVE/NOTICE.txt")
+
+def func_map(s):
+    if int(s)%2==0:
+        return (s,1)
+
+def func_map2(k):
+    return k + 1000
+
+def func_part(iterator):
+        print "-----" + iterator 
+
+cnt = sc.textFile('maprfs:///HDS_VOL_HIVE/NOTICE.txt',10).count()
+#pairs = lines.map(func_map)
+#pairs.collect()
+#pairs = lines.mapPartitions(func_part)
+
+#cc = pairs.reduceByKey(lambda a,b:a+b).sortByKey()
+
+#cc = pairs.sortByKey()
+
+
+#list=cc.collect()
+#for f in list:
+#       print f
+#print pairs.getNumPartitions()
+#print ("Partitions structure :{}".format(pairs.glom().collect()))
+
+print ("Partitions structure :{}%d" , cnt)
+------------------------------------------------------------------------------------------------
+from pyspark.sql import SparkSession
+from pyspark import SparkContext,SparkConf
+
+conf = SparkConf().setAppName("Test App").setMaster('local[5]')
+sc = SparkContext(conf=conf)
+
+#textFile = spark.read.text("maprfs:///HDS_VOL_HIVE/FWCDR/start_date=20200220/fwcdr_ldr_20200220_20200222093947_p1_000.gz")
+#textFile = spark.read.text("maprfs:///HDS_VOL_HIVE/NOTICE.txt")
+
+def func_map(s):
+    if int(s)%2==0:
+        return (s,1)
+
+def func_map2(k):
+    return k + 1000
+
+def func_part(iterator):
+        print "-----" + iterator 
+
+cnt = sc.textFile("file:///home/mapr/sp/test.txt",2).count()
+#pairs = lines.map(func_map)
+#pairs.collect()
+#pairs = lines.mapPartitions(func_part)
+
+#cc = pairs.reduceByKey(lambda a,b:a+b).sortByKey()
+
+#cc = pairs.sortByKey()
+
+
+#list=cc.collect()
+#for f in list:
+#       print f
+#print pairs.getNumPartitions()
+#print ("Partitions structure :{}".format(pairs.glom().collect()))
+
+print ("Partitions structure :{}%d" , cnt)
+------------------------------------------------------------------------------------------------
+from pyspark.sql import SparkSession
+from pyspark import SparkContext,SparkConf
+
+conf = SparkConf().setAppName("Test App").setMaster('local[5]')
+sc = SparkContext(conf=conf)
+
+#textFile = spark.read.text("maprfs:///HDS_VOL_HIVE/FWCDR/start_date=20200220/fwcdr_ldr_20200220_20200222093947_p1_000.gz")
+#textFile = sc.read.text("maprfs:///HDS_VOL_HIVE/NOTICE.txt")
+
+def func_map(s):
+    return (s,1)
+
+def func_map2(k):
+    return k + 1000
+
+#def func_part(iterator):
+#       print "-----" + iterator 
+
+##lines = sc.textFile("file:///home/mapr/sp/test.txt",2)
+lines = sc.textFile("maprfs:///HDS_VOL_HIVE/NOTICE.txt",2)
+#pairs = lines.map(func_map)
+#pairs = lines.mapPartitions(func_part)
+
+#cc = pairs.reduceByKey(lambda a,b:a+b).sortByKey()
+
+#cc = pairs.sortByKey()
+
+
+#list=cc.collect()
+#for f in list:
+#       print f
+print pairs.getNumPartitions()
+print ("Partitions structure :{}".format(pairs.glom().collect()))
+
+------------------------------------------------------------------------------------------------
+from pyspark.sql import SparkSession
+from pyspark import SparkContext,SparkConf
+
+conf = SparkConf().setAppName(appName).setMaster(master)
+sc = SparkContext(conf=conf)
+##spark = SparkSession.builder.appName("Test App").getOrCreate()
+
+#textFile = spark.read.text("maprfs:///HDS_VOL_HIVE/FWCDR/start_date=20200220/fwcdr_ldr_20200220_20200222093947_p1_000.gz")
+textFile = spark.read.text("maprfs:///HDS_VOL_HIVE/NOTICE.txt")
+
+cc=textFile.count()
+print ("Line count c:%i",cc)
+
+spark.stop()
+------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

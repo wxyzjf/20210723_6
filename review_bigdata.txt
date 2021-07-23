@@ -1,0 +1,58 @@
+hbase --maprdb 
+                               src           start_datetime          json_value
+001.000.000.000_20200219205838 1.0.0.0       2020-02-19 20:58:38     {"send_volume":"0","receive_volume":"13960","service":"161","dst":"121.202.142.64"}
+001.000.000.000_20200219205845 1.0.0.0       2020-02-19 20:58:45     {"send_volume":"0","receive_volume":"234","service":"123","dst":"121.202.152.64"}								   
+                 
+				 index 
+	001.000.000.000_20200219205838
+	001.000.000.000_20200219205845
+				 
+				 
+				  20200219205838                                                                       20200219205845 
+001.000.000.00 	 {"send_volume":"0","receive_volume":"13960","service":"161","dst":"121.202.142.64"}	{"send_volume":"0","receive_volume":"234","service":"123","dst":"121.202.152.64"}								   
+
+---db  storage (K,V)
+
+
+---maprcli --- create table 
+
+
+console ---create maprdb table
+
+https://bigdatamr08:8443/app/mcs/#/app/tables
+mapr/Smart2019
+
+hbase maprdb region ----
+
+maprfs (flat file)---hive
+bigdatamr09 --- maprdb --- sqlline(apache drill )
+
+linux
+hadoop + hbase + spark + drill + hive 
+drill + hive (sql)
+
+
+oracle
+local fs (flat file)---- external table 
+db 
+local fs(db file) -----oracle table
+
+   
+---spark 
+------ spark select maprfs (flat file) maprdb(table) ----count group ---join ----customaztion caclulate----
+
+
+bigdatamr09
+mapr/Smart2019
+
+   
+
+/opt/reload/script/dw_load_fw cdr_maprdb.sh
+
+
+[昨天 下午4:10] Kevin Ou
+    
+https://bigdat 
+
+Hbase kuanbiao zhaibiao
+maprcli table create

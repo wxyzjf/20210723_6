@@ -1,0 +1,74 @@
+hive -> hadoop fs( csv_file) = hive table
+hive -> hadoop fs( parquet_file structure) = hive table
+csv :  col1 |col2|col3
+	   vc1_a|vc2_a|vc3_a
+       vc1_b|vc2_b|vc3_b
+parquet 
+---pq1.pq ----
+
+	header: is parquet
+	body:
+		vc1_avc1_b -- vc2_avc2_b ---vc3_avc3_b
+	footer: (file meta data)
+		schema : col1 col2 col3
+		meta detail : offset col1 ,col2,col3
+		fast range index : col1 (between vc1_a and vc1_b )
+						    col2 (between vc2_a and vc2_b )
+							.....
+							
+---pq2.pq ----							
+		fast range index : col1 (between vc1_c and vc1_d )
+						    col2 (between vc2_c and vc2_d )
+							.....
+								count(*) ?
+							
+select col1 from table where col2 = vc2_a
+ 1) --- parquet
+	csv file 50g ziped ---- 500g
+	parquet  200g
+	
+	select count(*) from `/HDS_VOL_HIVE/FWPQ` where src =' 10.149.23.23';
+	
+ 
+ Testing step 
+1) prepare a test file 
+2) create hive table csv format location /HDS_VOL_HIVE/table_name
+3) load testing file to step 2) table 
+4) create parquet table (undserstanding bucket )
+
+	CREATE TABLE `tbl_pq`(
+  `col1` string)
+clustered by (col1) into 4 buckets
+ROW FORMAT SERDE 
+  'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe' 
+STORED AS INPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat' 
+OUTPUTFORMAT 
+  'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+LOCATION
+  'maprfs:/HDS_VOL_HIVE/TBL_PQ'
+TBLPROPERTIES (
+  'parquet.compress'='SNAPPY', 
+  'transient_lastDdlTime'='1590561199')
+  
+5)   insert into tbl_pq select * from h_tbl_test distribute by col1 sort by col1 ;
+6) login sqlline  sqlline -u "jdbc:drill:zk=bigdatamr08.hksmartone.com:5181,bigdatamr09.hksmartone.com:5181,bigdatamr10.hksmartone.com:5181" -n mapr -p Smart2019
+7) check the col1 max and min value  select min(col1),max(col1) from dfs.`/HDS_VOL_HIVE/TBL_PQ/*`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
